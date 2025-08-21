@@ -9,6 +9,7 @@ import ContentDisplay from './components/ContentDisplay';
 import SearchBar from './components/SearchBar';
 import LoadingSkeleton from './components/LoadingSkeleton';
 import AsciiArtDisplay from './components/AsciiArtDisplay';
+import HistoryPanel from './components/HistoryPanel';
 
 // A curated list of "banger" words and phrases for the random button.
 const PREDEFINED_WORDS = [
@@ -26,6 +27,8 @@ const PREDEFINED_WORDS = [
   'Existential', 'Nihilism', 'Solipsism', 'Phenomenology', 'Hermeneutics', 'Deconstruction', 'Postmodern', 'Absurdism', 'Catharsis', 'Epiphany', 'Melancholy', 'Nostalgia', 'Longing', 'Reverie', 'Pathos', 'Ethos', 'Logos', 'Mythos', 'Anamnesis', 'Intertextuality', 'Metafiction', 'Stream', 'Lacuna', 'Caesura', 'Enjambment'
 ];
 const UNIQUE_WORDS = [...new Set(PREDEFINED_WORDS)];
+const MAX_HISTORY_LENGTH = 50;
+const HISTORY_STORAGE_KEY = 'infinite-wiki-history';
 
 
 /**
@@ -51,6 +54,45 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [asciiArt, setAsciiArt] = useState<AsciiArtData | null>(null);
   const [generationTime, setGenerationTime] = useState<number | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+
+  // Load history from localStorage on initial mount
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (savedHistory) {
+        setHistory(JSON.parse(savedHistory));
+      }
+    } catch (e) {
+      console.error("Failed to load history from localStorage", e);
+    }
+  }, []);
+
+  // Save history to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+    } catch (e) {
+      console.error("Failed to save history to localStorage", e);
+    }
+  }, [history]);
+
+  // Update history when currentTopic changes
+  useEffect(() => {
+    if (currentTopic) {
+      setHistory(prevHistory => {
+        // Remove the topic if it already exists to move it to the front
+        const filteredHistory = prevHistory.filter(
+          item => item.toLowerCase() !== currentTopic.toLowerCase()
+        );
+        // Add the new topic to the beginning
+        const newHistory = [currentTopic, ...filteredHistory];
+        // Enforce the maximum length
+        return newHistory.slice(0, MAX_HISTORY_LENGTH);
+      });
+    }
+  }, [currentTopic]);
 
 
   useEffect(() => {
@@ -152,11 +194,31 @@ const App: React.FC = () => {
       setCurrentTopic(randomWord);
     }
   }, [currentTopic]);
+  
+  const handleToggleHistory = useCallback(() => {
+    setIsHistoryOpen(prev => !prev);
+  }, []);
+
+  const handleClearHistory = useCallback(() => {
+    setHistory([]);
+  }, []);
+
+  const handleHistoryItemClick = useCallback((topic: string) => {
+    if (topic.toLowerCase() !== currentTopic.toLowerCase()) {
+      setCurrentTopic(topic);
+    }
+    setIsHistoryOpen(false); // Close panel on selection
+  }, [currentTopic]);
 
 
   return (
     <div>
-      <SearchBar onSearch={handleSearch} onRandom={handleRandom} isLoading={isLoading} />
+      <SearchBar
+        onSearch={handleSearch}
+        onRandom={handleRandom}
+        isLoading={isLoading}
+        onToggleHistory={handleToggleHistory}
+      />
       
       <header style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <h1 style={{ letterSpacing: '0.2em', textTransform: 'uppercase' }}>
@@ -207,6 +269,15 @@ const App: React.FC = () => {
           {generationTime && ` · ${Math.round(generationTime)}ms`}
         </p>
       </footer>
+
+      <HistoryPanel
+        isOpen={isHistoryOpen}
+        history={history}
+        currentTopic={currentTopic}
+        onClose={handleToggleHistory}
+        onClear={handleClearHistory}
+        onItemClick={handleHistoryItemClick}
+      />
     </div>
   );
 };

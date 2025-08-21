@@ -7,10 +7,11 @@ import React, { useState } from 'react';
 interface SearchBarProps {
   onSearch: (query: string) => void;
   onRandom: () => void;
+  onToggleHistory: () => void;
   isLoading: boolean;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onRandom, isLoading }) => {
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onRandom, onToggleHistory, isLoading }) => {
   const [query, setQuery] = useState('');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -36,6 +37,9 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch, onRandom, isLoading }) 
       </form>
       <button onClick={onRandom} className="random-button" disabled={isLoading}>
         Random
+      </button>
+      <button onClick={onToggleHistory} className="history-toggle-button" disabled={isLoading}>
+        History
       </button>
     </div>
   );
