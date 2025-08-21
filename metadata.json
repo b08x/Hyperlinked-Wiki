@@ -1,0 +1,6 @@
+{
+  "name": "Hyperlinked Wiki",
+  "description": "A wiki where every word is a hyperlink to descriptions generated in real-time.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
