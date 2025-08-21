@@ -1,19 +1,19 @@
-import express from 'express';
+import express, { Express, Request, Response as ExpressResponse, json } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
 // Load environment variables from .env file
 dotenv.config();
 
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 8000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(json());
 
 // Health check endpoint
-app.get('/api/health', (req: express.Request, res: express.Response) => {
+app.get('/api/health', (req: Request, res: ExpressResponse) => {
   res.status(200).json({ status: 'ok' });
 });
 
